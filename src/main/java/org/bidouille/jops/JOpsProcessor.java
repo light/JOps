@@ -73,7 +73,7 @@ public class JOpsProcessor extends AbstractProcessor {
                 note( "Added operator '" + op + "' -> " + elem.getEnclosingElement() + "." + elem );
             }
         }
-        return true; // Indicate that the annotation is fully handled by us
+        return false; // Indicate that the annotation is fully handled by us
     }
 
     private void note( String note ) {
@@ -147,7 +147,7 @@ public class JOpsProcessor extends AbstractProcessor {
     private class OperatorMethod {
         private JCTree.Tag op;
         private ExecutableElement elem;
-        private ClassSymbol retsym;
+        private Type res;
         private Type arg0;
         private Type arg1;
         private MethodType mt;
@@ -158,24 +158,34 @@ public class JOpsProcessor extends AbstractProcessor {
             this.elem = elem;
         }
 
-        public void resolve( ClassReader reader, Names names, Resolve rs, Env<AttrContext> env ) {
-            if( retsym == null ) {
+        public void resolve( ClassReader reader, Names names, Resolve rs, Types types, Env<AttrContext> env ) {
+            if( sym == null ) {
                 // Re-resolve names etc since the context is not the same as during the annotation phase
                 MethodSymbol sym_ = (MethodSymbol) elem;
                 MethodType type = (MethodType) sym_.type;
-                String name = (sym_).name.toString(); // correct ?
+                String name = sym_.name.toString(); // correct ?
                 ClassSymbol recvsym = resolveClassSym( reader, names, sym_.owner.type );
-                retsym = resolveClassSym( reader, names, type.restype );
-                arg0 = resolveClassSym( reader, names, type.argtypes.get( 0 ) ).erasure_field;
-                arg1 = resolveClassSym( reader, names, type.argtypes.get( 1 ) ).erasure_field;
-                mt = new MethodType( List.of( arg0, arg1 ), retsym.type, List.<Type> nil(), recvsym );
+                res = getType( types, reader, names, type.restype );
+                arg0 = getType( types, reader, names, type.argtypes.get( 0 ) );
+                arg1 = getType( types, reader, names, type.argtypes.get( 1 ) );
+                mt = new MethodType( List.of( arg0, arg1 ), res, List.<Type> nil(), recvsym );
                 Name methodName = names.fromString( name );
                 sym = rs.resolveInternalMethod( null, env, recvsym.type, methodName, List.of( arg0, arg1 ), null );
             }
         }
 
+        // Recursively resolves a type and its type params
+        private Type getType( Types types, ClassReader reader, Names names, Type oldType ) {
+            ClassSymbol sym = resolveClassSym( reader, names, oldType );
+            List<Type> typarams = List.<Type> nil();
+            for( Type type : ((ClassType)oldType).typarams_field ) {
+                typarams = typarams.prepend( getType( types, reader, names, type ) );
+            }
+            return new ClassType( sym.type.getEnclosingType(), typarams.reverse(), sym );
+        }
+
         private ClassSymbol resolveClassSym( ClassReader reader, Names names, Type classType ) {
-            String className = ((ClassSymbol) classType.tsym).className();
+            String className = ((ClassSymbol) classType.tsym).flatname.toString();
             return reader.enterClass( names.fromString( className ) );
         }
 
@@ -203,7 +213,7 @@ public class JOpsProcessor extends AbstractProcessor {
 
             OperatorMethod foundOpMeth = null;
             for( OperatorMethod opMeth : ops ) {
-                opMeth.resolve( reader, names, rs, env );
+                opMeth.resolve( reader, names, rs, types, env );
                 if( tree.getTag() == opMeth.op
                         && types.isAssignable( opMeth.arg0, left )
                         && types.isAssignable( opMeth.arg1, right ) ) {
@@ -213,7 +223,7 @@ public class JOpsProcessor extends AbstractProcessor {
             }
 
             if( foundOpMeth != null ) {
-                tree.type = foundOpMeth.retsym.type;
+                tree.type = foundOpMeth.res;
                 tree.operator = foundOpMeth.sym;
                 setField( this, "result", tree.type );
                 debug( "Attributing overloaded operator '" + foundOpMeth.op + "' tree type to '" + tree.type + "'" );
@@ -253,7 +263,7 @@ public class JOpsProcessor extends AbstractProcessor {
                         List.<JCExpression> nil(),
                         make.Select( make.Ident( foundOpMeth.sym.owner ), foundOpMeth.sym ).setType( foundOpMeth.mt ),
                         List.of( tree.lhs, tree.rhs ) )
-                        .setType( foundOpMeth.retsym.type );
+                        .setType( foundOpMeth.res );
                 debug( "Replacing overloaded operator '" + foundOpMeth.op + "' by call to  '" + foundOpMeth.sym + "'" );
             }
         }

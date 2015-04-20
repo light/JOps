@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 public class OperatorExtensionTest {
@@ -32,7 +33,7 @@ public class OperatorExtensionTest {
         List<String> cola = Arrays.asList( "hello", "," );
         List<String> colb = Arrays.asList( "world", "!" );
 
-        assertThat( cola + colb, contains( "hello", ",", "world", "!" ) );
+        Assert.<List<String>>assertThat( cola + colb, contains( "hello", ",", "world", "!" ) );
     }
 
     @Test
@@ -40,7 +41,7 @@ public class OperatorExtensionTest {
         List cola = Arrays.asList( 1 );
         List colb = Arrays.asList( 2, 3 );
 
-        assertThat( cola + colb, contains( 1, 2, 3 ) );
+        Assert.<List<Object>>assertThat( cola + colb, contains( 1, 2, 3 ) );
     }
 
     @Test
@@ -48,7 +49,8 @@ public class OperatorExtensionTest {
         List<String> cola = Arrays.asList( "hello", "," );
         List<String> colb = Arrays.asList( "world", "!" );
 
-        assertThat( cola % colb, contains( "hello", ",", "world", "!" ) );
+//        assertThat( concatString( cola, colb ), contains( "hello", ",", "world", "!" ) );
+        Assert.<List<String>>assertThat( cola % colb, contains( "hello", ",", "world", "!" ) );
     }
 
 }
