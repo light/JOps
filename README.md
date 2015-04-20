@@ -89,7 +89,9 @@ You can find some more samples in the [test directory](src/test/java/org/bidouil
 
 ### Compatibility
 
-The library has been tested to work with the following versions of the Oracle JDK :
+This project is a `javac` hack and consequently it only works when compiling your code with `javac`. It will
+not work with `ecj`, Eclipse's built-in compiler. The library has been tested to work with the following
+versions of the Oracle JDK :
 
   JOps   |     JDK
 -------- | ------------
