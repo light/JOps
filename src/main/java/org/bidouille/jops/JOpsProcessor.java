@@ -25,8 +25,6 @@ import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ClassType;
-import com.sun.tools.javac.code.Type.ErasedClassType;
-import com.sun.tools.javac.code.Type.JCPrimitiveType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.Attr;

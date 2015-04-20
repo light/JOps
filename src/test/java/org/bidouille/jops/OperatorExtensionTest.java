@@ -58,8 +58,7 @@ public class OperatorExtensionTest {
         List<String> cola = Arrays.asList( "hello", "," );
         List<String> colb = Arrays.asList( "world", "!" );
 
-        // assertThat( concatString( cola, colb ), contains( "hello", ",", "world", "!" ) );
-        Assert.<List<String>> assertThat( cola % colb, contains( "hello", ",", "world", "!" ) );
+        assertThat( cola % colb, contains( "hello", ",", "world", "!" ) );
     }
 
     @Test
