@@ -26,6 +26,7 @@ import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.code.Type.ErasedClassType;
+import com.sun.tools.javac.code.Type.JCPrimitiveType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.Attr;
@@ -176,12 +177,15 @@ public class JOpsProcessor extends AbstractProcessor {
 
         // Recursively resolves a type and its type params
         private Type getType( Types types, ClassReader reader, Names names, Type oldType ) {
-            ClassSymbol sym = resolveClassSym( reader, names, oldType );
-            List<Type> typarams = List.<Type> nil();
-            for( Type type : ((ClassType)oldType).typarams_field ) {
-                typarams = typarams.prepend( getType( types, reader, names, type ) );
+            if( oldType instanceof ClassType ) {
+                ClassSymbol sym = resolveClassSym( reader, names, oldType );
+                List<Type> typarams = List.<Type> nil();
+                for( Type type : ((ClassType) oldType).typarams_field ) {
+                    typarams = typarams.prepend( getType( types, reader, names, type ) );
+                }
+                return new ClassType( sym.type.getEnclosingType(), typarams.reverse(), sym );
             }
-            return new ClassType( sym.type.getEnclosingType(), typarams.reverse(), sym );
+            return oldType;
         }
 
         private ClassSymbol resolveClassSym( ClassReader reader, Names names, Type classType ) {
