@@ -24,6 +24,8 @@ import com.sun.tools.javac.api.MultiTaskListener;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Type.ClassType;
+import com.sun.tools.javac.code.Type.ErasedClassType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.comp.Attr;
@@ -146,8 +148,8 @@ public class JOpsProcessor extends AbstractProcessor {
         private JCTree.Tag op;
         private ExecutableElement elem;
         private ClassSymbol retsym;
-        private ClassSymbol arg0;
-        private ClassSymbol arg1;
+        private Type arg0;
+        private Type arg1;
         private MethodType mt;
         private MethodSymbol sym;
 
@@ -164,11 +166,11 @@ public class JOpsProcessor extends AbstractProcessor {
                 String name = (sym_).name.toString(); // correct ?
                 ClassSymbol recvsym = resolveClassSym( reader, names, sym_.owner.type );
                 retsym = resolveClassSym( reader, names, type.restype );
-                arg0 = resolveClassSym( reader, names, type.argtypes.get( 0 ) );
-                arg1 = resolveClassSym( reader, names, type.argtypes.get( 1 ) );
-                mt = new MethodType( List.of( arg0.type, arg1.type ), retsym.type, List.<Type> nil(), recvsym );
+                arg0 = resolveClassSym( reader, names, type.argtypes.get( 0 ) ).erasure_field;
+                arg1 = resolveClassSym( reader, names, type.argtypes.get( 1 ) ).erasure_field;
+                mt = new MethodType( List.of( arg0, arg1 ), retsym.type, List.<Type> nil(), recvsym );
                 Name methodName = names.fromString( name );
-                sym = rs.resolveInternalMethod( null, env, recvsym.type, methodName, List.of( arg0.type, arg1.type ), null );
+                sym = rs.resolveInternalMethod( null, env, recvsym.type, methodName, List.of( arg0, arg1 ), null );
             }
         }
 
@@ -203,8 +205,8 @@ public class JOpsProcessor extends AbstractProcessor {
             for( OperatorMethod opMeth : ops ) {
                 opMeth.resolve( reader, names, rs, env );
                 if( tree.getTag() == opMeth.op
-                        && types.isAssignable( opMeth.arg0.type, left )
-                        && types.isAssignable( opMeth.arg1.type, right ) ) {
+                        && types.isAssignable( opMeth.arg0, left )
+                        && types.isAssignable( opMeth.arg1, right ) ) {
                     foundOpMeth = opMeth;
                     break;
                 }
@@ -239,8 +241,8 @@ public class JOpsProcessor extends AbstractProcessor {
             OperatorMethod foundOpMeth = null;
             for( OperatorMethod opMeth : ops ) {
                 if( tree.getTag() == opMeth.op
-                        && types.isAssignable( opMeth.arg0.type, tree.lhs.type )
-                        && types.isAssignable( opMeth.arg1.type, tree.rhs.type ) ) {
+                        && types.isAssignable( opMeth.arg0, tree.lhs.type )
+                        && types.isAssignable( opMeth.arg1, tree.rhs.type ) ) {
                     foundOpMeth = opMeth;
                     break;
                 }
