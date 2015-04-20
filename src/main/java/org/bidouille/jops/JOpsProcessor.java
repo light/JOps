@@ -68,11 +68,19 @@ public class JOpsProcessor extends AbstractProcessor {
                 processingEnv.getMessager().printMessage( Kind.ERROR, "Invalid operator '" + op + "'", elem, elem.getAnnotationMirrors().get( 0 ) );
             } else {
                 ops.add( new OperatorMethod( tag, (ExecutableElement) elem ) );
-                System.out.println( "Added operator '" + op + "' -> " + elem.getEnclosingElement() + "." + elem );
-                processingEnv.getMessager().printMessage( Kind.NOTE, "Added operator '" + op + "' -> " + elem.getEnclosingElement() + "." + elem );
+                note( "Added operator '" + op + "' -> " + elem.getEnclosingElement() + "." + elem );
             }
         }
         return true; // Indicate that the annotation is fully handled by us
+    }
+
+    private void note( String note ) {
+        System.out.println( note );
+        processingEnv.getMessager().printMessage( Kind.NOTE, note );
+    }
+
+    private void debug( String message ) {
+        note( message );
     }
 
     private static Tag getBinOpTag( String op ) {
@@ -204,7 +212,9 @@ public class JOpsProcessor extends AbstractProcessor {
 
             if( foundOpMeth != null ) {
                 tree.type = foundOpMeth.retsym.type;
+                tree.operator = foundOpMeth.sym;
                 setField( this, "result", tree.type );
+                debug( "Attributing overloaded operator '" + foundOpMeth.op + "' tree type to '" + tree.type + "'" );
             } else {
                 super.visitBinary( tree );
             }
@@ -224,6 +234,7 @@ public class JOpsProcessor extends AbstractProcessor {
 
         @Override
         public void visitBinary( JCBinary tree ) {
+            super.visitBinary( tree );
 
             OperatorMethod foundOpMeth = null;
             for( OperatorMethod opMeth : ops ) {
@@ -241,10 +252,10 @@ public class JOpsProcessor extends AbstractProcessor {
                         make.Select( make.Ident( foundOpMeth.sym.owner ), foundOpMeth.sym ).setType( foundOpMeth.mt ),
                         List.of( tree.lhs, tree.rhs ) )
                         .setType( foundOpMeth.retsym.type );
-            } else {
-                super.visitBinary( tree );
+                debug( "Replacing overloaded operator '" + foundOpMeth.op + "' by call to  '" + foundOpMeth.sym + "'" );
             }
         }
+
     }
 
 }
