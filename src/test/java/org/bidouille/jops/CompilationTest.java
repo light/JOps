@@ -29,6 +29,11 @@ public class CompilationTest {
         assertHasNoError( "src/test/resources/parameterized_return_type.java" );
     }
 
+    @Test
+    public void test_unknown_operator() throws IOException {
+        assertHasErrors( "src/test/resources/unknown_operator.java" );
+    }
+
     private void assertHasNoError( String path ) throws IOException {
         int res = compile( path );
         assertThat( res, is( 0 ) );
