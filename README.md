@@ -122,4 +122,5 @@ Then in your `<dependencies>` section :
 ### Without Maven
 
 Grab the `jar` from the repository at this location : http://archiva.bidouille.org/archiva/repository/releases/org/bidouille/jops/jops/0.1/
+and put it in your classpath.
 
