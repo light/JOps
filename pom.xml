@@ -81,7 +81,7 @@
   <distributionManagement>
     <repository>
       <id>archiva</id>
-      <url>http://archiva.bidouille.org/archiva/repository/releases/</url>
+      <url>https://archiva.bidouille.org/archiva/repository/releases/</url>
     </repository>
   </distributionManagement>
 
